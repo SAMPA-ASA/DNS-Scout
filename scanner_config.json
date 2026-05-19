@@ -1,0 +1,13 @@
+{
+    "csv_file": "filtered_CIDR_database.csv",
+    "output_file": "live_dns.txt",
+    "cidr_column": "subnet",
+    "timeout": 1.5,
+    "max_workers": 200,
+    "max_in_flight": 800,
+    "query_domain": "google.com",
+    "query_type": "A",
+    "resume_enabled": true,
+    "resume_meta_file": ".scanner_resume_meta.json",
+    "resume_db_file": ".scanner_progress.sqlite3"
+}

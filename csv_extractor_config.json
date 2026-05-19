@@ -1,0 +1,63 @@
+{
+  "target_directory": "./source",
+  "output_file": "filtered_CIDR_database.csv",
+
+  "csv_read_options": {
+    "encoding": "utf-8",
+    "delimiter": ",",
+    "header": false
+  },
+
+  "default_rule": {
+    "filter": {
+      "logic": "AND",
+      "conditions": [
+        { "column": "2", "operator": "equals", "value": "Iran (Islamic Republic of)" }
+      ]
+    },
+    "columns_to_extract": ["0"]
+  },
+
+  "file_rules": [
+    {
+      "filename_pattern": "IP2PROXY.*\\.csv",
+      "csv_read_options": { "encoding": "latin1" },
+      "filter": {
+        "logic": "OR",
+        "conditions": [
+          { "column": 1, "operator": "equals", "value": "IR" },
+          { "column": 2, "operator": "equals", "value": "Iran (Islamic Republic of)" }
+        ]
+      },
+      "columns_to_extract": [0]
+    },
+    {
+      "filename_pattern": "IP2LOCATION.*\\.csv",
+      "filter": {
+        "logic": "OR",
+        "conditions": [
+          { "column": 1, "operator": "equals", "value": "IR" },
+          { "column": 2, "operator": "equals", "value": "Iran (Islamic Republic of)" }
+        ]
+      },
+      "columns_to_extract": [0]
+    },
+    {
+      "filename_pattern": "COLLECTED.*\\.csv",
+      "csv_read_options": { "encoding": "latin1" },
+      "columns_to_extract": [0]
+    }
+  ],
+
+  "output_deduplicate": {
+    "enabled": true,
+    "columns": [0],
+    "keep": "first"
+  },
+
+  "output_format": {
+    "encoding": "utf-8",
+    "delimiter": ",",
+    "index": false
+  }
+}
