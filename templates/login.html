@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ورود به پنل DNS Scout</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='panel.css') }}">
+</head>
+<body class="login-body">
+<div class="login-card">
+  <h1>پنل DNS Scout</h1>
+  <p class="muted">برای ورود، نام کاربری و رمز عبور خود را وارد کنید.</p>
+  {% if error %}
+  <div class="alert">{{ error }}</div>
+  {% endif %}
+  <form method="post">
+    <label>نام کاربری</label>
+    <input type="text" name="username" required>
+    <label>رمز عبور</label>
+    <input type="password" name="password" required>
+    <button type="submit">ورود</button>
+  </form>
+</div>
+</body>
+</html>

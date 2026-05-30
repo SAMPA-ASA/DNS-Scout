@@ -1,0 +1,221 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>DNS Scout 2.0.0-beta</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='panel.css') }}">
+</head>
+<body>
+<header class="mobile-header">
+  <button id="hamburger-btn" class="hamburger-btn" aria-label="باز کردن منو">☰</button>
+  <div class="mobile-title">DNS Scout</div>
+</header>
+<div id="mobile-overlay" class="mobile-overlay"></div>
+<div class="layout">
+  <aside id="sidebar" class="sidebar">
+    <h2>DNS Scout Panel</h2>
+    <button class="menu-item active" data-page="scan-page">اسکن IPها</button>
+    <button class="menu-item" data-page="resources-page">منابع</button>
+    <button class="menu-item" data-page="dns-test-page">تست DNSهای پیدا شده</button>
+    <button class="menu-item" data-page="info-page">Info</button>
+    <a class="logout" href="/logout">خروج</a>
+  </aside>
+
+  <main class="content">
+    <section id="scan-page" class="page active">
+      <h1>اسکن IPها</h1>
+
+      <div class="card form-card">
+        <h3>تنظیمات اسکن</h3>
+        <div class="settings-grid">
+          <input type="text" id="scan-domain" placeholder="دامنه تست (مثال: google.com)">
+          <input type="number" id="scan-timeout" step="0.1" min="0.1" placeholder="Timeout (ثانیه)">
+          <select id="scan-criterion">
+            <option value="A">نوع رکورد: A</option>
+            <option value="AAAA">نوع رکورد: AAAA</option>
+          </select>
+        </div>
+        <small class="muted">این تنظیمات در فایل پیکربندی هم ذخیره می‌شوند.</small>
+      </div>
+
+      <div class="actions">
+        <button id="scan-start">شروع اسکن</button>
+        <button id="scan-stop" class="warn">توقف اسکن</button>
+        <button id="scan-resume">ادامه اسکن</button>
+      </div>
+
+      <div class="stats-grid">
+        <div class="stat"><span>وضعیت</span><strong id="scan-state">idle</strong></div>
+        <div class="stat"><span>تعداد IP</span><strong id="scan-total">0</strong></div>
+        <div class="stat"><span>اسکن شده</span><strong id="scan-scanned">0</strong></div>
+        <div class="stat"><span>تایید شده</span><strong id="scan-confirmed">0</strong></div>
+        <div class="stat"><span>رد شده</span><strong id="scan-rejected">0</strong></div>
+      </div>
+
+      <div class="progress-wrap">
+        <div class="progress-bar" id="scan-progress-bar"></div>
+      </div>
+      <div class="progress-text" id="scan-progress-text">0%</div>
+
+      <h3>لاگ اسکن</h3>
+      <div class="log-toolbar">
+        <label><input type="checkbox" id="scan-autoscroll" checked> اسکرول خودکار</label>
+        <button id="scan-clear-logs" class="ghost">پاک کردن لاگ</button>
+      </div>
+      <div id="scan-logs" class="logs"></div>
+    </section>
+
+    <section id="resources-page" class="page">
+      <h1>منابع</h1>
+
+      <div class="resource-tabs">
+        <button id="resource-tab-files-btn" class="resource-tab-btn active" type="button">فایل‌ها</button>
+        <button id="resource-tab-extractor-btn" class="resource-tab-btn" type="button">تنظیم استخراج</button>
+      </div>
+
+      <div id="resource-tab-files" class="resource-tab-content active">
+        <div class="card form-card">
+          <h3>آپلود CSV</h3>
+          <div class="actions">
+            <input type="file" id="resource-csv-file" accept=".csv,text/csv">
+            <button id="resource-upload-csv">آپلود فایل</button>
+            <button id="resource-upload-pause" class="ghost hidden" type="button">توقف آپلود</button>
+            <button id="resource-upload-cancel" class="warn hidden" type="button">لغو آپلود</button>
+          </div>
+          <div id="resource-selected-file" class="muted">هنوز فایلی انتخاب نشده است.</div>
+          <div id="resource-upload-progress-wrap" class="upload-progress-wrap hidden">
+            <div class="progress-wrap upload-progress">
+              <div class="progress-bar" id="resource-upload-progress-bar"></div>
+            </div>
+            <div class="progress-text" id="resource-upload-progress-text">0%</div>
+          </div>
+          <div id="resource-upload-warning" class="upload-warning hidden">
+            لطفاً تا پایان آپلود، صفحه را نبندید و refresh نکنید.
+          </div>
+        </div>
+
+        <div class="card form-card">
+          <h3>CIDR دستی</h3>
+          <textarea id="resource-cidrs" rows="6" placeholder="هر CIDR در یک خط (مثال: 1.1.1.0/24)"></textarea>
+          <div class="actions">
+            <button id="resource-save-cidrs">ذخیره CIDRها</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3>وضعیت منابع</h3>
+          <div id="resource-summary" class="muted">-</div>
+          <div class="resource-status-tabs">
+            <button id="resource-status-tab-all" class="resource-status-tab active" type="button">کل فایل‌ها</button>
+            <button id="resource-status-tab-enabled" class="resource-status-tab" type="button">فایل‌های فعال</button>
+            <button id="resource-status-tab-disabled" class="resource-status-tab" type="button">فایل‌های غیر فعال</button>
+          </div>
+          <table>
+            <thead>
+            <tr>
+              <th>نام</th>
+              <th>وضعیت</th>
+              <th>تعداد CIDR</th>
+              <th>حجم</th>
+              <th>عملیات</th>
+            </tr>
+            </thead>
+            <tbody id="resource-files-body"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div id="resource-tab-extractor" class="resource-tab-content">
+        <div class="card form-card">
+          <h3>تنظیمات استخراج CSV</h3>
+          <small class="muted">
+            در این بخش می‌توانید تنظیمات استخراج را ویرایش و ذخیره کنید.
+          </small>
+          <div class="settings-grid extractor-readonly-grid">
+            <input id="extractor-target-dir" type="text" readonly placeholder="مسیر پوشه CSVها">
+            <input id="extractor-output-file" type="text" readonly placeholder="فایل خروجی">
+          </div>
+          <label for="extractor-settings-json">تنظیمات قابل ویرایش (JSON)</label>
+          <textarea id="extractor-settings-json" rows="18" placeholder='{"csv_read_options": {}, "default_rule": {}, "file_rules": []}'></textarea>
+          <div class="actions">
+            <button id="extractor-save-btn" type="button">ذخیره تنظیم استخراج</button>
+            <button id="extractor-reset-btn" type="button" class="ghost">بازنشانی فرم</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="dns-test-page" class="page">
+      <h1>تست DNSهای پیدا شده</h1>
+      <div class="actions">
+        <input type="text" id="dns-domain" placeholder="دامنه تست (مثال: google.com)">
+        <input type="number" id="dns-timeout" step="0.1" min="0.1" placeholder="Timeout (ثانیه)">
+        <button id="dns-start">▶ شروع تست</button>
+        <button id="dns-stop" class="warn">■ توقف تست</button>
+        <button id="dns-download" class="ghost">دانلود فایل خروجی</button>
+      </div>
+
+      <div class="tabs">
+        <button class="tab active" data-tab="dns-table-tab">جدول DNSها</button>
+        <button class="tab" data-tab="dns-logs-tab">لاگ‌ها</button>
+      </div>
+
+      <div id="dns-table-tab" class="tab-content active">
+        <table>
+          <thead>
+          <tr>
+            <th>IP</th>
+            <th>وضعیت</th>
+            <th>تاخیر (ms)</th>
+          </tr>
+          </thead>
+          <tbody id="dns-results-body"></tbody>
+        </table>
+      </div>
+
+      <div id="dns-logs-tab" class="tab-content">
+        <div class="log-toolbar">
+          <label><input type="checkbox" id="dns-autoscroll" checked> اسکرول خودکار</label>
+          <button id="dns-clear-logs" class="ghost">پاک کردن لاگ</button>
+        </div>
+        <div id="dns-logs" class="logs"></div>
+      </div>
+    </section>
+
+    <section id="info-page" class="page">
+      <h1>Info</h1>
+      <div class="card">
+        <h3>DNS Scout</h3>
+        <div id="app-version" class="muted">Version: 2.0.0-beta</div>
+        <p class="muted">ابزار پایش و تست DNS با امکان مدیریت منابع CIDR و بررسی عملکرد DNSهای پیدا شده.</p>
+        <p>
+          Repository:
+          <a id="app-repository-link" href="https://github.com/sampa-asa/dns-scout" target="_blank" rel="noopener noreferrer">
+            https://github.com/sampa-asa/dns-scout
+          </a>
+        </p>
+      </div>
+    </section>
+  </main>
+</div>
+
+<div id="app-modal" class="app-modal" aria-hidden="true">
+  <div class="app-modal-card" role="dialog" aria-modal="true" aria-labelledby="app-modal-title">
+    <div class="app-modal-header">
+      <h3 id="app-modal-title">پیام</h3>
+    </div>
+    <div class="app-modal-body">
+      <p id="app-modal-message"></p>
+    </div>
+    <div class="app-modal-actions">
+      <button id="app-modal-cancel" class="ghost hidden" type="button">انصراف</button>
+      <button id="app-modal-confirm" class="warn hidden" type="button">تایید</button>
+      <button id="app-modal-close" type="button">متوجه شدم</button>
+    </div>
+  </div>
+</div>
+
+<script src="{{ url_for('static', filename='panel.js') }}"></script>
+</body>
+</html>

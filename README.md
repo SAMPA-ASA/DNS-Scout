@@ -1,93 +1,54 @@
 # DNS Scout
 
-این پروژه یک pipeline سه‌مرحله‌ای برای پیدا کردن DNSهای فعال از روی دیتای ZIP/CSV است:
+## CLI تغییر نام کاربری/رمز پنل
 
-1. استخراج فایل‌های ZIP
-2. استخراج و فیلتر CIDRها از CSV
-3. اسکن IPها و ذخیره IPهای DNS فعال
+بعد از نصب، برای تغییر `username/password` بدون نصب مجدد:
+
+```bash
+sudo /opt/dns-scout/.venv/bin/python /opt/dns-scout/manage_panel_auth.py --config /opt/dns-scout/panel_config.json
+```
+
+نکته:
+- اگر پارامتر ندهید، اسکریپت به‌صورت تعاملی username/password جدید را می‌گیرد.
+- بعد از تغییر، سرویس را ری‌استارت کنید:
+
+```bash
+sudo systemctl restart dns-scout.service
+```
 
 ## شروع
 
-### گام 1: بررسی و نصب پایتون
-اگر پایتون را نصب ندارید، میتوانید از لینک‌های زیر، دانلود و نصب کنید:
-- [سایت اصلی پایتون](https://www.python.org/downloads/)
-- سایت‌های داخلی:
-  - [soft98.ir](https://soft98.ir/software/programming/16260-python.html)
-  - [yasdl.com](https://www.yasdl.com/102171/%D8%AF%D8%A7%D9%86%D9%84%D9%88%D8%AF-python.html)
-  - [p30download.ir](https://p30download.ir/fa/entry/36554/python)
-  - [asandownload.ir](https://asandownload.ir/software/entry/7370/)
-
-### گام 2: نصب پکیج `pandas`
-در برنامه‌ی cmd ویندوز یا terminal لینوکس، فرمان زیر را بنویسید:
-```bash
-pip install pandas
-```
-اگر به دلیل مشکلات ناشی از محدودیت اینترنت در ایران، نتوانستید از طریق کد فوق، این وابستگی را نصب کنید، به صورت زیر از Mirror استفاده کنید:
-```bash
-pip install -i https://mirror-pypi.runflare.com/simple pandas
-```
-
-### گام 3: اجرای برنامه
-برای اجرای کامل برنامه، در مسیری که کدهای این پروژه را قرار دادید، در برنامه‌ی cmd ویندوز یا terminal لینوکس، فرمان زیر را بنویسید:
-```bash
-python main.py
-```
-
-> تمامی DNSهایی که در طول اسکن یافت می‌شوند، در مسیری که کدهای این پروژه را قرار دادید، در فایل `live_dns.txt` ذخیره می‌شوند.
-
-## ساختار فایل‌ها
-
-- `main.py`: اجرای یکپارچه کل pipeline
-- `zip_extractor.py`: استخراج همه ZIPهای داخل `source`
-- `csv_extractor.py`: استخراج/فیلتر CSV بر اساس فایل کانفیگ
-- `scanner.py`: اسکن DNS روی IPهای تولیدشده
-- `csv_extractor_config.json`: تنظیمات مرحله CSV extraction
-- `scanner_config.json`: تنظیمات مرحله DNS scan
-
-## پیش‌نیازها
-
-- Python 3.10+
-- پکیج `pandas`
-
-نصب وابستگی:
+کد زیر را اجرا کنید تا نصب خودکار، آغاز شود:
 
 ```bash
-pip install pandas
+curl -fsSL https://raw.githubusercontent.com/SAMPA-ASA/dns-scout/main/install_online.sh | bash
 ```
-اگر به دلیل مشکلات ناشی از محدودیت اینترنت در ایران، نتوانستید از طریق کد فوق، این وابستگی را نصب کنید، به صورت زیر از Mirror استفاده کنید:
+
+روند نصب آنلاین:
+1. ابتدا source codeهای پروژه دریافت و ذخیره می‌شود.
+1. سپس، از شما (`username`) و رمز عبور (`password`) پنل را دریافت می‌کند.
+2. یک `port` آزاد و تصادفی برای پنل پیشنهاد میدهد (که میتوانید آن را تأیید کنید و یا پورت دلخواه خود را وارد کنید)
+4. سرویس `dns-scout.service` را نصب و اجرا می‌کند.
+5. آدرس پنل را نمایش میدهد و پنل را راه‌اندازی میکند.
+
+## پنل 
+
+###  اسکن IPها
+در این قسمت، میتوانید تمامی IPهایی که در قسمت منابع، قرار داده شده را اسکن کنید.
+### تست DNSهای یافت‌شده 
+در این قسمت، میتوانید تمامی DNSهایی که در قسمت `اسکن IPها` یافت شده‌اند را دریافت و یا آنها را بر اساس عملکردشان، اسکن کنید  
+
+### منابع
+در این قسمت، میتوانید فایل csv دلخواه خود را اضافه و یا آن را حذف و غیر فعال کنید.
+همچنین، در قسمت `تنظیم استخراج`، میتوانید چگونگی پیدا کردن رکوردها و ستون فایل‌های csv را (که بخشی از فایل `csv_extractor_config.json` هست) تغییر دهید.
+
+## Uninstall
+
+برای حذف سرویس نصب‌شده و بازنشانی وضعیت نصب سیستم (بدون حذف فایل‌های پروژه‌ای که در ابتدا clone شده):
+
 ```bash
-pip install -i https://mirror-pypi.runflare.com/simple pandas
+sudo bash ./uninstall.sh
 ```
-
-## نحوه اجرای اصلی
-
-اجرای کامل pipeline:
-
-```bash
-python main.py
-```
-
-با مسیرهای سفارشی:
-
-```bash
-python main.py --source-dir source --csv-config csv_extractor_config.json --scanner-config scanner_config.json --output-file live_dns.txt
-```
-
-## حالت تست
-
-برای تست end-to-end بدون وابستگی به دیتای واقعی:
-
-```bash
-python main.py --test
-```
-
-در حالت تست:
-
-- داده موقت ساخته می‌شود.
-- ZIP تستی تولید و extract می‌شود.
-- CSV فیلتر می‌شود.
-- اسکن DNS به‌صورت mock اجرا می‌شود.
-- خروجی بررسی می‌شود و نتیجه پاس/فیل مشخص می‌شود.
 
 ## تنظیمات CSV Extraction
 
@@ -177,28 +138,11 @@ python main.py --test
 - `resume_meta_file`: فایل fingerprint/metadata اسکن قبلی
 - `resume_db_file`: دیتابیس SQLite پیشرفت اسکن
 
-رفتار resume:
-
-- اگر fingerprint فایل منبع تغییر نکرده باشد، برنامه به انگلیسی می‌پرسد:
-  - `Continue from last scan? (y/N)`
-- اگر `y/yes` بزنید، از نقطه قبلی ادامه می‌دهد.
-- در غیر این صورت از اول شروع می‌کند.
-
-
 نکته:
 
 - `main.py` بعد از مرحله CSV، فایل ورودی scanner را خودکار روی خروجی جدید تنظیم می‌کند.
 - اسکنر به‌صورت stream-based اجرا می‌شود و IPها را یکجا در RAM نگه نمی‌دارد.
 - هر IP تاییدشده (`CONFIRMED`) همان لحظه در فایل خروجی نوشته می‌شود.
-
-## لاگ‌های اسکن
-
-در زمان scan، برای هر IP لاگ چاپ می‌شود:
-
-- وضعیت شروع اسکن (`[START]`)
-- اولین IP اسکن‌شده (`[FIRST-SCAN]`)
-- وضعیت هر IP (`[SCAN] ... RESULT: CONFIRMED/REJECTED/ERROR`)
-- شمارنده تجمعی `CONFIRMED` و `REJECTED`
 
 ## خروجی نهایی
 
@@ -207,12 +151,6 @@ python main.py --test
 - `live_dns.txt`
 
 هر خط شامل یک IP فعال DNS است.
-
-## نکات کارایی
-
-- اگر رنج CIDR خیلی بزرگ باشد، تعداد IPها بسیار زیاد می‌شود و زمان scan بالا می‌رود.
-- برای شروع، `max_workers` و `timeout` را محافظه‌کارانه تنظیم کنید.
-- برای نتایج دقیق‌تر، چند بار اسکن را تکرار کنید.
 
 ## سلب مسئولیت (Disclaimer)
 

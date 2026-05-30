@@ -293,6 +293,7 @@ def main(config_path: str):
     skipped_previously_scanned = 0
     first_new_scan_logged = False
 
+    resumed_scanned_count = 0
     if resume_enabled:
         resume_conn = init_resume_db(resume_db_file)
         # Persist source identity immediately, so interrupted runs can still resume.
@@ -306,7 +307,7 @@ def main(config_path: str):
             },
         )
         if continue_mode:
-            live_count, rejected_count, completed = get_resume_counts(resume_conn)
+            live_count, rejected_count, resumed_scanned_count = get_resume_counts(resume_conn)
             if not os.path.exists(output_file):
                 with open(output_file, "w", encoding="utf-8") as rebuild_out:
                     for row in resume_conn.execute(
@@ -316,7 +317,7 @@ def main(config_path: str):
             print(
                 f"{colorize('[RESUME]', BOLD + CYAN)} "
                 f"{colorize('Loaded previous progress.', BOLD + CYAN)} "
-                f"{colorize('ALREADY-SCANNED:', CYAN)} {colorize(str(completed), BOLD + MAGENTA)} "
+                f"{colorize('ALREADY-SCANNED:', CYAN)} {colorize(str(resumed_scanned_count), BOLD + MAGENTA)} "
                 f"{colorize('CONFIRMED:', GREEN)} {colorize(str(live_count), BOLD + GREEN)} "
                 f"{colorize('REJECTED:', RED)} {colorize(str(rejected_count), BOLD + RED)}",
                 flush=True,
@@ -327,7 +328,7 @@ def main(config_path: str):
     submitted = 0
 
     def submit_one(executor: ThreadPoolExecutor, in_flight: dict) -> bool:
-        nonlocal submitted, skipped_previously_scanned
+        nonlocal submitted, skipped_previously_scanned, completed
         while True:
             try:
                 ip = next(ip_stream)
@@ -340,6 +341,7 @@ def main(config_path: str):
                 ).fetchone()
                 if status_row is not None:
                     skipped_previously_scanned += 1
+                    completed += 1
                     continue
             future = executor.submit(scan_ip, ip, timeout, dns_query)
             in_flight[future] = ip
