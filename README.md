@@ -1,5 +1,20 @@
 # DNS Scout
 
+## شروع
+
+کد زیر را اجرا کنید تا نصب خودکار، آغاز شود:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/SAMPA-ASA/dns-scout/main/install_online.sh | bash
+```
+
+روند نصب آنلاین:
+1. ابتدا source codeهای پروژه دریافت و ذخیره می‌شود.
+1. سپس، از شما (`username`) و رمز عبور (`password`) پنل را دریافت می‌کند.
+2. یک `port` آزاد و تصادفی برای پنل پیشنهاد میدهد (که میتوانید آن را تأیید کنید و یا پورت دلخواه خود را وارد کنید)
+4. سرویس `dns-scout.service` را نصب و اجرا می‌کند.
+5. آدرس پنل را نمایش میدهد و پنل را راه‌اندازی میکند.
+
 ## CLI تغییر نام کاربری/رمز پنل
 
 بعد از نصب، برای تغییر `username/password` بدون نصب مجدد:
@@ -16,20 +31,6 @@ sudo /opt/dns-scout/.venv/bin/python /opt/dns-scout/manage_panel_auth.py --confi
 sudo systemctl restart dns-scout.service
 ```
 
-## شروع
-
-کد زیر را اجرا کنید تا نصب خودکار، آغاز شود:
-
-```bash
-curl -fsSL https://raw.githubusercontent.com/SAMPA-ASA/dns-scout/main/install_online.sh | bash
-```
-
-روند نصب آنلاین:
-1. ابتدا source codeهای پروژه دریافت و ذخیره می‌شود.
-1. سپس، از شما (`username`) و رمز عبور (`password`) پنل را دریافت می‌کند.
-2. یک `port` آزاد و تصادفی برای پنل پیشنهاد میدهد (که میتوانید آن را تأیید کنید و یا پورت دلخواه خود را وارد کنید)
-4. سرویس `dns-scout.service` را نصب و اجرا می‌کند.
-5. آدرس پنل را نمایش میدهد و پنل را راه‌اندازی میکند.
 
 ## پنل 
 
