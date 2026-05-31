@@ -9,6 +9,14 @@ PYTHON_BIN="python3"
 PANEL_CONFIG_FILE="${INSTALL_DIR}/panel_config.json"
 SERVICE_FILE="/etc/systemd/system/${SERVICE_NAME}"
 TTY_INPUT="/dev/tty"
+UBUNTU_APT_MIRRORS=(
+  "http://mirror-linux.runflare.com/ubuntu"
+  "http://mirror.arvancloud.ir/ubuntu"
+)
+PIP_INDEX_MIRRORS=(
+  "https://mirror-pypi.runflare.com/simple"
+  "https://package-mirror.liara.ir/repository/pypi"
+)
 
 prompt_input() {
   local __result_var="$1"
@@ -64,19 +72,76 @@ python_has_venv() {
   return 1
 }
 
+is_ubuntu_system() {
+  if [[ -r /etc/os-release ]]; then
+    # shellcheck disable=SC1091
+    . /etc/os-release
+    if [[ "${ID:-}" == "ubuntu" || "${ID_LIKE:-}" == *ubuntu* ]]; then
+      return 0
+    fi
+  fi
+  return 1
+}
+
+switch_ubuntu_apt_mirror() {
+  local mirror_url="$1"
+  local files=()
+  local file=""
+
+  if ! is_ubuntu_system; then
+    return 1
+  fi
+
+  shopt -s nullglob
+  files=(/etc/apt/sources.list /etc/apt/sources.list.d/*.list /etc/apt/sources.list.d/*.sources)
+  shopt -u nullglob
+
+  echo "==> Switching Ubuntu APT sources to mirror: ${mirror_url}"
+  for file in "${files[@]}"; do
+    if [[ -f "${file}" ]]; then
+      ${SUDO} sed -Ei \
+        -e "s|https?://([[:alnum:]-]+\\.)*archive\\.ubuntu\\.com/ubuntu/?|${mirror_url}|g" \
+        -e "s|https?://security\\.ubuntu\\.com/ubuntu/?|${mirror_url}|g" \
+        "${file}"
+    fi
+  done
+}
+
+try_apt_install_python_packages() {
+  local py_series="$1"
+  if ${SUDO} apt-get install -y python3-pip python3-venv; then
+    return 0
+  fi
+
+  echo "Default python3-venv package was unavailable. Trying versioned fallback."
+  if ${SUDO} apt-get install -y python3-pip "python${py_series}-venv"; then
+    return 0
+  fi
+
+  ${SUDO} apt-get install -y "python${py_series}-full"
+}
+
 install_python_runtime_packages() {
   local py_series
+  local mirror
   py_series="$(${PYTHON_BIN} -c 'import sys; print(f"{sys.version_info[0]}.{sys.version_info[1]}")')"
 
   if command -v apt-get >/dev/null 2>&1; then
-    ${SUDO} apt-get update
-    if ! ${SUDO} apt-get install -y python3-pip python3-venv; then
-      echo "Default python3-venv package was unavailable. Trying versioned fallback."
-      if ! ${SUDO} apt-get install -y python3-pip "python${py_series}-venv"; then
-        ${SUDO} apt-get install -y "python${py_series}-full"
+    if ${SUDO} apt-get update && try_apt_install_python_packages "${py_series}"; then
+      return
+    fi
+
+    if is_ubuntu_system; then
+      for mirror in "${UBUNTU_APT_MIRRORS[@]}"; do
+        switch_ubuntu_apt_mirror "${mirror}"
+        if ${SUDO} apt-get update && try_apt_install_python_packages "${py_series}"; then
+          return
+        fi
       fi
     fi
-    return
+
+    echo "Failed to install python runtime packages via APT."
+    return 1
   fi
 
   if command -v dnf >/dev/null 2>&1; then
@@ -106,7 +171,7 @@ install_python_runtime_packages() {
 
   echo "No supported package manager found to install python dependencies automatically."
   echo "Please install python3, python3-venv, and python3-pip manually."
-  exit 1
+  return 1
 }
 
 ensure_python_runtime_ready() {
@@ -115,7 +180,10 @@ ensure_python_runtime_ready() {
   fi
 
   echo "==> Ensuring python venv and pip"
-  install_python_runtime_packages
+  if ! install_python_runtime_packages; then
+    echo "Failed to prepare system python packages automatically."
+    exit 1
+  fi
 
   if ! python_has_pip; then
     "${PYTHON_BIN}" -m ensurepip --upgrade >/dev/null 2>&1 || true
@@ -130,6 +198,25 @@ ensure_python_runtime_ready() {
     echo "Failed to prepare Python pip automatically."
     exit 1
   fi
+}
+
+pip_install_with_fallback() {
+  local python_exec="$1"
+  shift
+  local mirror
+
+  if ${SUDO} "${python_exec}" -m pip "$@"; then
+    return 0
+  fi
+
+  for mirror in "${PIP_INDEX_MIRRORS[@]}"; do
+    echo "Retrying pip command with mirror: ${mirror}"
+    if ${SUDO} "${python_exec}" -m pip --index-url "${mirror}" "$@"; then
+      return 0
+    fi
+  done
+
+  return 1
 }
 
 is_port_free() {
@@ -267,11 +354,15 @@ if [[ ! -d "${INSTALL_DIR}/.venv" ]]; then
   ${SUDO} "${PYTHON_BIN}" -m venv "${INSTALL_DIR}/.venv"
 fi
 
-${SUDO} "${INSTALL_DIR}/.venv/bin/python" -m pip install --upgrade pip
+if ! pip_install_with_fallback "${INSTALL_DIR}/.venv/bin/python" install --upgrade pip; then
+  echo "Failed to upgrade pip using default index and fallback mirrors."
+  exit 1
+fi
 
 echo "==> Installing dependencies"
-if ! ${SUDO} "${INSTALL_DIR}/.venv/bin/python" -m pip install pandas flask; then
-  ${SUDO} "${INSTALL_DIR}/.venv/bin/python" -m pip install -i https://mirror-pypi.runflare.com/simple pandas flask
+if ! pip_install_with_fallback "${INSTALL_DIR}/.venv/bin/python" install pandas flask; then
+  echo "Failed to install dependencies using default index and fallback mirrors."
+  exit 1
 fi
 
 echo "==> Generating panel configuration"
