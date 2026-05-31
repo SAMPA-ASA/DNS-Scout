@@ -8,6 +8,46 @@ SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)"
 PYTHON_BIN="python3"
 PANEL_CONFIG_FILE="${INSTALL_DIR}/panel_config.json"
 SERVICE_FILE="/etc/systemd/system/${SERVICE_NAME}"
+TTY_INPUT="/dev/tty"
+
+prompt_input() {
+  local __result_var="$1"
+  local __prompt="$2"
+  local __silent="${3:-false}"
+  local __value=""
+
+  if [[ "${__silent}" == "true" ]]; then
+    if [[ -r "${TTY_INPUT}" ]]; then
+      IFS= read -r -s -p "${__prompt}" __value <"${TTY_INPUT}" || {
+        echo
+        echo "Input was cancelled or unavailable."
+        exit 1
+      }
+    else
+      IFS= read -r -s -p "${__prompt}" __value || {
+        echo
+        echo "Input was cancelled or unavailable."
+        exit 1
+      }
+    fi
+  else
+    if [[ -r "${TTY_INPUT}" ]]; then
+      IFS= read -r -p "${__prompt}" __value <"${TTY_INPUT}" || {
+        echo
+        echo "Input was cancelled or unavailable."
+        exit 1
+      }
+    else
+      IFS= read -r -p "${__prompt}" __value || {
+        echo
+        echo "Input was cancelled or unavailable."
+        exit 1
+      }
+    fi
+  fi
+
+  printf -v "${__result_var}" '%s' "${__value}"
+}
 
 is_port_free() {
   local port="$1"
@@ -86,16 +126,16 @@ if [[ "${PY_MAJOR}" -lt 3 || "${PY_MINOR}" -lt 10 ]]; then
 fi
 
 echo
-read -rp "Enter panel username: " PANEL_USERNAME
+prompt_input PANEL_USERNAME "Enter panel username: "
 while [[ -z "${PANEL_USERNAME}" ]]; do
   echo "Username cannot be empty."
-  read -rp "Enter panel username: " PANEL_USERNAME
+  prompt_input PANEL_USERNAME "Enter panel username: "
 done
 
 while true; do
-  read -rsp "Enter panel password: " PANEL_PASSWORD
+  prompt_input PANEL_PASSWORD "Enter panel password: " true
   echo
-  read -rsp "Confirm panel password: " PANEL_PASSWORD_CONFIRM
+  prompt_input PANEL_PASSWORD_CONFIRM "Confirm panel password: " true
   echo
   if [[ -z "${PANEL_PASSWORD}" ]]; then
     echo "Password cannot be empty."
@@ -112,7 +152,7 @@ SUGGESTED_PORT="$(pick_random_free_port)"
 echo
 echo "Suggested free port: ${SUGGESTED_PORT}"
 while true; do
-  read -rp "Press Enter to accept it or enter a custom port: " SELECTED_PORT
+  prompt_input SELECTED_PORT "Press Enter to accept it or enter a custom port: "
   if [[ -z "${SELECTED_PORT}" ]]; then
     SELECTED_PORT="${SUGGESTED_PORT}"
   fi

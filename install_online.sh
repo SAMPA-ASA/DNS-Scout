@@ -44,7 +44,11 @@ git clone --depth 1 --branch "${BRANCH}" "${REPO_URL}" "${TMP_DIR}/repo"
 
 pushd "${TMP_DIR}/repo" >/dev/null
 echo "==> Running project installer"
-bash ./install.sh
+if [[ -r /dev/tty ]]; then
+  bash ./install.sh </dev/tty
+else
+  bash ./install.sh
+fi
 REMOTE_COMMIT="$(git rev-parse HEAD)"
 popd >/dev/null
 
