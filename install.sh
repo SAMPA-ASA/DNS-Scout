@@ -49,6 +49,89 @@ prompt_input() {
   printf -v "${__result_var}" '%s' "${__value}"
 }
 
+python_has_pip() {
+  "${PYTHON_BIN}" -m pip --version >/dev/null 2>&1
+}
+
+python_has_venv() {
+  local tmp_dir
+  tmp_dir="$(mktemp -d)"
+  if "${PYTHON_BIN}" -m venv "${tmp_dir}/venv" >/dev/null 2>&1; then
+    rm -rf -- "${tmp_dir}"
+    return 0
+  fi
+  rm -rf -- "${tmp_dir}"
+  return 1
+}
+
+install_python_runtime_packages() {
+  local py_series
+  py_series="$(${PYTHON_BIN} -c 'import sys; print(f"{sys.version_info[0]}.{sys.version_info[1]}")')"
+
+  if command -v apt-get >/dev/null 2>&1; then
+    ${SUDO} apt-get update
+    if ! ${SUDO} apt-get install -y python3-pip python3-venv; then
+      echo "Default python3-venv package was unavailable. Trying versioned fallback."
+      if ! ${SUDO} apt-get install -y python3-pip "python${py_series}-venv"; then
+        ${SUDO} apt-get install -y "python${py_series}-full"
+      fi
+    fi
+    return
+  fi
+
+  if command -v dnf >/dev/null 2>&1; then
+    ${SUDO} dnf install -y python3-pip
+    return
+  fi
+
+  if command -v yum >/dev/null 2>&1; then
+    ${SUDO} yum install -y python3-pip
+    return
+  fi
+
+  if command -v pacman >/dev/null 2>&1; then
+    ${SUDO} pacman -Sy --noconfirm python python-pip
+    return
+  fi
+
+  if command -v zypper >/dev/null 2>&1; then
+    ${SUDO} zypper --non-interactive install python3 python3-pip
+    return
+  fi
+
+  if command -v apk >/dev/null 2>&1; then
+    ${SUDO} apk add --no-cache python3 py3-pip
+    return
+  fi
+
+  echo "No supported package manager found to install python dependencies automatically."
+  echo "Please install python3, python3-venv, and python3-pip manually."
+  exit 1
+}
+
+ensure_python_runtime_ready() {
+  if python_has_venv && python_has_pip; then
+    return
+  fi
+
+  echo "==> Ensuring python venv and pip"
+  install_python_runtime_packages
+
+  if ! python_has_pip; then
+    "${PYTHON_BIN}" -m ensurepip --upgrade >/dev/null 2>&1 || true
+  fi
+
+  if ! python_has_venv; then
+    echo "Failed to prepare Python venv support automatically."
+    exit 1
+  fi
+
+  if ! python_has_pip; then
+    echo "Failed to prepare Python pip automatically."
+    exit 1
+  fi
+}
+
 is_port_free() {
   local port="$1"
   "${PYTHON_BIN}" - "$port" <<'PY'
@@ -177,11 +260,7 @@ ${SUDO} mkdir -p "${INSTALL_DIR}"
 ${SUDO} rm -rf "${INSTALL_DIR:?}"/*
 ${SUDO} cp -a "${SCRIPT_DIR}/." "${INSTALL_DIR}/"
 
-echo "==> Ensuring python3-venv and pip"
-if ! dpkg -s python3-venv >/dev/null 2>&1; then
-  ${SUDO} apt update
-  ${SUDO} apt install -y python3-venv python3-pip
-fi
+ensure_python_runtime_ready
 
 echo "==> Creating virtual environment"
 if [[ ! -d "${INSTALL_DIR}/.venv" ]]; then
