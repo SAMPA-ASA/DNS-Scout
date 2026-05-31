@@ -137,7 +137,7 @@ install_python_runtime_packages() {
         if ${SUDO} apt-get update && try_apt_install_python_packages "${py_series}"; then
           return
         fi
-      fi
+      done
     fi
 
     echo "Failed to install python runtime packages via APT."
