@@ -7,10 +7,10 @@
 ```bash
 curl -fsSL https://raw.githubusercontent.com/SAMPA-ASA/dns-scout/main/install_online.sh | bash
 ```
-یا به کمک پروکسی:
+یا به کمک پروکسی http:
 ```bash
-export http_proxy="http://192.168.1.2:10808"
-export https_proxy="http://192.168.1.2:10808"
+export http_proxy="http://<your proxy ip>:<your proxy port>"
+export https_proxy="http://<your proxy ip>:<your proxy port>"
 export no_proxy="localhost,127.0.0.1,::1,mirror-linux.runflare.com,mirror.arvancloud.ir,linux-mirror.liara.ir,repo.abrha.net,ubuntu.hostiran.ir,archive.ubuntu.petiak.ir,archive.ubuntu.petiak.ir,ubuntu-mirror.kimiahost.com,ir.ubuntu.sindad.cloud,mirror.faraso.org,mirror.aminidc.com,mirrors.pardisco.co,mirror.0-1.cloud,linuxmirrors.ir,repo.iut.ac.ir,ubuntu.shatel.ir,ubuntu.byteiran.com,mirror.rasanegar.com,mirror-pypi.runflare.com,package-mirror.liara.ir,mirror.abrha.net,pypi.runflare.com,package-mirror.liara.ir,mirror.abrha.net,pypi.mirrors.chabokan.com,pypi.tuna.tsinghua.edu.cn,mirrors.aliyun.com,pypi.mirrors.ustc.edu.cn"
 
 curl -fsSL https://raw.githubusercontent.com/SAMPA-ASA/dns-scout/main/install_online.sh | bash
