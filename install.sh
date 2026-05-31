@@ -17,6 +17,7 @@ PIP_INDEX_MIRRORS=(
   "https://mirror-pypi.runflare.com/simple"
   "https://package-mirror.liara.ir/repository/pypi"
 )
+APT_SOURCES_BACKUP_DIR=""
 
 prompt_input() {
   local __result_var="$1"
@@ -83,28 +84,72 @@ is_ubuntu_system() {
   return 1
 }
 
+list_ubuntu_apt_source_files() {
+  local files=()
+  shopt -s nullglob
+  files=(/etc/apt/sources.list /etc/apt/sources.list.d/*.list /etc/apt/sources.list.d/*.sources)
+  shopt -u nullglob
+  printf '%s\n' "${files[@]}"
+}
+
+backup_ubuntu_apt_sources() {
+  local file
+  local rel_path
+  local rel_dir
+
+  if ! is_ubuntu_system; then
+    return 1
+  fi
+  if [[ -n "${APT_SOURCES_BACKUP_DIR}" ]]; then
+    return 0
+  fi
+
+  APT_SOURCES_BACKUP_DIR="$(mktemp -d)"
+  while IFS= read -r file; do
+    [[ -f "${file}" ]] || continue
+    rel_path="${file#/}"
+    rel_dir="$(dirname -- "${rel_path}")"
+    mkdir -p "${APT_SOURCES_BACKUP_DIR}/${rel_dir}"
+    ${SUDO} cp -a "${file}" "${APT_SOURCES_BACKUP_DIR}/${rel_path}"
+  done < <(list_ubuntu_apt_source_files)
+}
+
+restore_ubuntu_apt_sources() {
+  local file
+  local rel_path
+
+  if [[ -z "${APT_SOURCES_BACKUP_DIR}" || ! -d "${APT_SOURCES_BACKUP_DIR}" ]]; then
+    return 0
+  fi
+
+  while IFS= read -r file; do
+    rel_path="${file#/}"
+    if [[ -f "${APT_SOURCES_BACKUP_DIR}/${rel_path}" ]]; then
+      ${SUDO} cp -a "${APT_SOURCES_BACKUP_DIR}/${rel_path}" "${file}"
+    fi
+  done < <(list_ubuntu_apt_source_files)
+
+  rm -rf -- "${APT_SOURCES_BACKUP_DIR}"
+  APT_SOURCES_BACKUP_DIR=""
+}
+
 switch_ubuntu_apt_mirror() {
   local mirror_url="$1"
-  local files=()
   local file=""
 
   if ! is_ubuntu_system; then
     return 1
   fi
 
-  shopt -s nullglob
-  files=(/etc/apt/sources.list /etc/apt/sources.list.d/*.list /etc/apt/sources.list.d/*.sources)
-  shopt -u nullglob
-
   echo "==> Switching Ubuntu APT sources to mirror: ${mirror_url}"
-  for file in "${files[@]}"; do
+  while IFS= read -r file; do
     if [[ -f "${file}" ]]; then
       ${SUDO} sed -Ei \
         -e "s|https?://([[:alnum:]-]+\\.)*archive\\.ubuntu\\.com/ubuntu/?|${mirror_url}|g" \
         -e "s|https?://security\\.ubuntu\\.com/ubuntu/?|${mirror_url}|g" \
         "${file}"
     fi
-  done
+  done < <(list_ubuntu_apt_source_files)
 }
 
 try_apt_install_python_packages() {
@@ -132,12 +177,15 @@ install_python_runtime_packages() {
     fi
 
     if is_ubuntu_system; then
+      backup_ubuntu_apt_sources
       for mirror in "${UBUNTU_APT_MIRRORS[@]}"; do
         switch_ubuntu_apt_mirror "${mirror}"
         if ${SUDO} apt-get update && try_apt_install_python_packages "${py_series}"; then
+          restore_ubuntu_apt_sources
           return
         fi
       done
+      restore_ubuntu_apt_sources
     fi
 
     echo "Failed to install python runtime packages via APT."
