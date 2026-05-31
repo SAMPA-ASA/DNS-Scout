@@ -1,4 +1,10 @@
 #!/usr/bin/env bash
+
+# Re-run with bash if invoked via a different shell (e.g., `sh install_online.sh`).
+if [ -z "${BASH_VERSION:-}" ]; then
+  exec bash "$0" "$@"
+fi
+
 set -euo pipefail
 
 APP_NAME="dns-scout"
