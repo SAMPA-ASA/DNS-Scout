@@ -1,20 +1,40 @@
 # DNS Scout
 
 ## شروع
-
+### روش اول
 کد زیر را اجرا کنید تا نصب خودکار، آغاز شود:
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/SAMPA-ASA/dns-scout/main/install_online.sh | bash
 ```
+یا به کمک پروکسی:
+```bash
+export http_proxy="http://192.168.1.2:10808"
+export https_proxy="http://192.168.1.2:10808"
+export no_proxy="localhost,127.0.0.1,::1,mirror-linux.runflare.com,mirror.arvancloud.ir,linux-mirror.liara.ir,repo.abrha.net,ubuntu.hostiran.ir,archive.ubuntu.petiak.ir,archive.ubuntu.petiak.ir,ubuntu-mirror.kimiahost.com,ir.ubuntu.sindad.cloud,mirror.faraso.org,mirror.aminidc.com,mirrors.pardisco.co,mirror.0-1.cloud,linuxmirrors.ir,repo.iut.ac.ir,ubuntu.shatel.ir,ubuntu.byteiran.com,mirror.rasanegar.com,mirror-pypi.runflare.com,package-mirror.liara.ir,mirror.abrha.net,pypi.runflare.com,package-mirror.liara.ir,mirror.abrha.net,pypi.mirrors.chabokan.com,pypi.tuna.tsinghua.edu.cn,mirrors.aliyun.com,pypi.mirrors.ustc.edu.cn"
 
-روند نصب آنلاین:
+curl -fsSL https://raw.githubusercontent.com/SAMPA-ASA/dns-scout/main/install_online.sh | bash
+```
+روند نصب:
 1. ابتدا source codeهای پروژه دریافت و ذخیره می‌شود.
-1. سپس، از شما (`username`) و رمز عبور (`password`) پنل را دریافت می‌کند.
-2. یک `port` آزاد و تصادفی برای پنل پیشنهاد میدهد (که میتوانید آن را تأیید کنید و یا پورت دلخواه خود را وارد کنید)
-4. سرویس `dns-scout.service` را نصب و اجرا می‌کند.
-5. آدرس پنل را نمایش میدهد و پنل را راه‌اندازی میکند.
+2. سپس، از شما (`username`) و رمز عبور (`password`) پنل را دریافت می‌شود.
+3. یک `port` آزاد و تصادفی برای پنل پیشنهاد میشود (که میتوانید آن را تأیید کنید و یا پورت دلخواه خود را وارد کنید)
+4. سرویس `dns-scout.service` را نصب و اجرا می‌شود.
+5. آدرس پنل را نمایش میشود و پنل، راه‌اندازی می‌شود.
 
+### روش دوم
+- ابتدا فایل zip این پروژه را دریافت کنید.
+- سپس، آن را در مسیر دلخواه خود extract کنید
+- در مسیر پروژه، فرمان زیر را وارد کنید:
+```bash
+sudo bash install.sh
+```
+
+روند نصب:
+1. از شما (`username`) و رمز عبور (`password`) پنل را دریافت می‌شود.
+2. یک `port` آزاد و تصادفی برای پنل پیشنهاد میشود (که میتوانید آن را تأیید کنید و یا پورت دلخواه خود را وارد کنید)
+4. سرویس `dns-scout.service` را نصب و اجرا می‌شود.
+5. آدرس پنل نمایش میشود و پنل، راه‌اندازی میشود.
 ## CLI تغییر نام کاربری/رمز پنل
 
 بعد از نصب، برای تغییر `username/password` بدون نصب مجدد:
