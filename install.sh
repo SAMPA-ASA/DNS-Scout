@@ -12,12 +12,35 @@ TTY_INPUT="/dev/tty"
 UBUNTU_APT_MIRRORS=(
   "http://mirror-linux.runflare.com/ubuntu"
   "http://mirror.arvancloud.ir/ubuntu"
+  "http://linux-mirror.liara.ir/repository/ubuntu"
+  "http://linux-mirror.liara.ir/repository/ubuntu-security"
+  "https://repo.abrha.net/ubuntu"
+  "https://ubuntu.hostiran.ir/ubuntuarchive"
+  "https://archive.ubuntu.petiak.ir/ubuntu"
+  "https://ubuntu-mirror.kimiahost.com"
+  "https://ir.ubuntu.sindad.cloud/ubuntu"
+  "http://mirror.faraso.org/ubuntu"
+  "http://mirror.aminidc.com/ubuntu"
+  "https://mirrors.pardisco.co/ubuntu"
+  "https://mirror.0-1.cloud/ubuntu"
+  "http://linuxmirrors.ir/pub/ubuntu"
+  "http://repo.iut.ac.ir/repo/Ubuntu"
+  "https://ubuntu.shatel.ir/ubuntu"
+  "http://ubuntu.byteiran.com/ubuntu"
+  "https://mirror.rasanegar.com/ubuntu"
 )
 PIP_INDEX_MIRRORS=(
   "https://mirror-pypi.runflare.com/simple"
   "https://package-mirror.liara.ir/repository/pypi"
+  "https://mirror.abrha.net/repository/pypi/simple"
+  "https://pypi.runflare.com/simple"
+  "https://pypi.mirrors.chabokan.com/simple"
+  "https://pypi.tuna.tsinghua.edu.cn/simple"
+  "https://mirrors.aliyun.com/pypi/simple"
+  "https://pypi.mirrors.ustc.edu.cn/simple"
 )
 APT_SOURCES_BACKUP_DIR=""
+OFFICIAL_UBUNTU_APT_URL="http://archive.ubuntu.com/ubuntu"
 
 prompt_input() {
   local __result_var="$1"
@@ -133,6 +156,24 @@ restore_ubuntu_apt_sources() {
   APT_SOURCES_BACKUP_DIR=""
 }
 
+switch_ubuntu_apt_to_official() {
+  local file=""
+
+  if ! is_ubuntu_system; then
+    return 1
+  fi
+
+  echo "==> Trying official Ubuntu repositories first"
+  while IFS= read -r file; do
+    if [[ -f "${file}" ]]; then
+      ${SUDO} sed -Ei \
+        -e "s|https?://mirror-linux\\.runflare\\.com/ubuntu/?|${OFFICIAL_UBUNTU_APT_URL}|g" \
+        -e "s|https?://mirror\\.arvancloud\\.ir/ubuntu/?|${OFFICIAL_UBUNTU_APT_URL}|g" \
+        "${file}"
+    fi
+  done < <(list_ubuntu_apt_source_files)
+}
+
 switch_ubuntu_apt_mirror() {
   local mirror_url="$1"
   local file=""
@@ -147,6 +188,8 @@ switch_ubuntu_apt_mirror() {
       ${SUDO} sed -Ei \
         -e "s|https?://([[:alnum:]-]+\\.)*archive\\.ubuntu\\.com/ubuntu/?|${mirror_url}|g" \
         -e "s|https?://security\\.ubuntu\\.com/ubuntu/?|${mirror_url}|g" \
+        -e "s|https?://mirror-linux\\.runflare\\.com/ubuntu/?|${mirror_url}|g" \
+        -e "s|https?://mirror\\.arvancloud\\.ir/ubuntu/?|${mirror_url}|g" \
         "${file}"
     fi
   done < <(list_ubuntu_apt_source_files)
@@ -169,23 +212,36 @@ try_apt_install_python_packages() {
 install_python_runtime_packages() {
   local py_series
   local mirror
+  local apt_sources_were_backed_up="false"
   py_series="$(${PYTHON_BIN} -c 'import sys; print(f"{sys.version_info[0]}.{sys.version_info[1]}")')"
 
   if command -v apt-get >/dev/null 2>&1; then
+    if is_ubuntu_system; then
+      backup_ubuntu_apt_sources
+      apt_sources_were_backed_up="true"
+      switch_ubuntu_apt_to_official
+    fi
+
     if ${SUDO} apt-get update && try_apt_install_python_packages "${py_series}"; then
+      if [[ "${apt_sources_were_backed_up}" == "true" ]]; then
+        restore_ubuntu_apt_sources
+      fi
       return
     fi
 
     if is_ubuntu_system; then
-      backup_ubuntu_apt_sources
       for mirror in "${UBUNTU_APT_MIRRORS[@]}"; do
         switch_ubuntu_apt_mirror "${mirror}"
         if ${SUDO} apt-get update && try_apt_install_python_packages "${py_series}"; then
-          restore_ubuntu_apt_sources
+          if [[ "${apt_sources_were_backed_up}" == "true" ]]; then
+            restore_ubuntu_apt_sources
+          fi
           return
         fi
       done
-      restore_ubuntu_apt_sources
+      if [[ "${apt_sources_were_backed_up}" == "true" ]]; then
+        restore_ubuntu_apt_sources
+      fi
     fi
 
     echo "Failed to install python runtime packages via APT."
@@ -252,6 +308,11 @@ pip_install_with_fallback() {
   local python_exec="$1"
   shift
   local mirror
+  local pip_subcommand="${1:-}"
+
+  if [[ -z "${pip_subcommand}" ]]; then
+    return 1
+  fi
 
   if ${SUDO} "${python_exec}" -m pip "$@"; then
     return 0
@@ -259,7 +320,14 @@ pip_install_with_fallback() {
 
   for mirror in "${PIP_INDEX_MIRRORS[@]}"; do
     echo "Retrying pip command with mirror: ${mirror}"
-    if ${SUDO} "${python_exec}" -m pip --index-url "${mirror}" "$@"; then
+    if [[ "${pip_subcommand}" == "install" ]]; then
+      if ${SUDO} "${python_exec}" -m pip install --index-url "${mirror}" "${@:2}"; then
+        return 0
+      fi
+      continue
+    fi
+
+    if ${SUDO} env PIP_INDEX_URL="${mirror}" "${python_exec}" -m pip "$@"; then
       return 0
     fi
   done
