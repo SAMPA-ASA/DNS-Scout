@@ -183,3 +183,10 @@ sudo bash ./uninstall.sh
 ## منبع داده‌های پیش‌فرض CIDR
 
 - [lite.ip2location.com](https://lite.ip2location.com/)
+
+---
+- لینک کانال تلگرام: https://t.me/Sampa_Asa <br>
+- راه ارتباطی: https://t.me/Sampa_Asa?direct
+---
+
+به امید روزی که همه به اینترنت آزاد واقعی دست پیدا کنیم. 🕊
