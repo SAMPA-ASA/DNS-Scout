@@ -3,10 +3,9 @@ import argparse
 import getpass
 import json
 import os
+import socket
 import tempfile
 from pathlib import Path
-
-from werkzeug.security import generate_password_hash
 
 
 def parse_args() -> argparse.Namespace:
@@ -27,6 +26,11 @@ def parse_args() -> argparse.Namespace:
         "--password",
         default=None,
         help="New password. If omitted, asks interactively.",
+    )
+    parser.add_argument(
+        "--show-urls",
+        action="store_true",
+        help="Print panel login URLs and exit without changing credentials.",
     )
     return parser.parse_args()
 
@@ -66,6 +70,53 @@ def atomic_write_json(path: Path, payload: dict) -> None:
             os.remove(tmp_path)
 
 
+def discover_panel_hosts() -> list[str]:
+    hosts: list[str] = ["localhost", "127.0.0.1"]
+    discovered_ips: set[str] = set()
+
+    try:
+        for info in socket.getaddrinfo(socket.gethostname(), None, family=socket.AF_INET):
+            ip = info[4][0]
+            if ip and not ip.startswith("127."):
+                discovered_ips.add(ip)
+    except OSError:
+        pass
+
+    for target in ("8.8.8.8", "1.1.1.1"):
+        try:
+            with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as sock:
+                sock.connect((target, 80))
+                ip = sock.getsockname()[0]
+                if ip and not ip.startswith("127."):
+                    discovered_ips.add(ip)
+        except OSError:
+            continue
+
+    hosts.extend(sorted(discovered_ips))
+    unique_hosts: list[str] = []
+    seen: set[str] = set()
+    for host in hosts:
+        if host in seen:
+            continue
+        seen.add(host)
+        unique_hosts.append(host)
+    return unique_hosts
+
+
+def print_panel_login_urls(config_path: Path, cfg: dict) -> int:
+    try:
+        port = int(cfg["port"])
+    except (KeyError, TypeError, ValueError):
+        print(f"Invalid or missing 'port' in config: {config_path}")
+        return 1
+
+    print(f"Panel config: {config_path}")
+    print("Login URLs:")
+    for host in discover_panel_hosts():
+        print(f"  http://{host}:{port}/login")
+    return 0
+
+
 def main() -> int:
     args = parse_args()
     config_path = Path(args.config).resolve()
@@ -74,8 +125,11 @@ def main() -> int:
         print(f"Config file not found: {config_path}")
         return 1
 
-    with config_path.open("r", encoding="utf-8") as f:
+    with config_path.open("r", encoding="utf-8-sig") as f:
         cfg = json.load(f)
+
+    if args.show_urls:
+        return print_panel_login_urls(config_path, cfg)
 
     current_username = str(cfg.get("username", "admin"))
     username = args.username.strip() if args.username else ask_username(current_username)
@@ -86,6 +140,12 @@ def main() -> int:
     password = args.password if args.password else ask_password()
     if not password:
         print("Password cannot be empty.")
+        return 1
+
+    try:
+        from werkzeug.security import generate_password_hash
+    except ModuleNotFoundError:
+        print("Missing dependency: werkzeug. Install project requirements first.")
         return 1
 
     cfg["username"] = username

@@ -32,7 +32,7 @@ def resolve_cidr_column(csv_path: Path, preferred_column: str) -> str:
 
 def resolve_extractor_output_file(csv_config_path: str) -> Path:
     cfg_path = Path(csv_config_path).resolve()
-    with cfg_path.open("r", encoding="utf-8") as f:
+    with cfg_path.open("r", encoding="utf-8-sig") as f:
         cfg = json.load(f)
     output_file = cfg.get("output_file", "filtered_CIDR_database.csv")
     output_path = Path(output_file)
@@ -46,7 +46,7 @@ def load_scanner_config_resolved(
 ) -> dict:
     scanner_config_abs = Path(scanner_config_path).resolve()
     scanner_config_dir = scanner_config_abs.parent
-    with scanner_config_abs.open("r", encoding="utf-8") as f:
+    with scanner_config_abs.open("r", encoding="utf-8-sig") as f:
         scanner_cfg = json.load(f)
 
     if output_file:

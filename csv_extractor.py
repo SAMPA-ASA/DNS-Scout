@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+    #!/usr/bin/env python3
 """Config-driven CSV extractor with low-memory streaming and optional deduplication."""
 
 from __future__ import annotations

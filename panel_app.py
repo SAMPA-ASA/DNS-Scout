@@ -42,7 +42,8 @@ def build_dns_query(domain: str, qtype: int = 1) -> bytes:
 
 
 def load_json(path: Path) -> dict:
-    with path.open("r", encoding="utf-8") as f:
+    # Accept UTF-8 files with or without BOM (Windows editors/scripts may add BOM).
+    with path.open("r", encoding="utf-8-sig") as f:
         return json.load(f)
 
 

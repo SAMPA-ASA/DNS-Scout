@@ -1,19 +1,50 @@
 # DNS Scout
 
-## شروع در Ubuntu
-### روش اول
+[![Python 3.9+](https://img.shields.io/badge/Python-3.12%2B-blue?logo=python&logoColor=white)](https://www.python.org/)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue?style=flat-square)](LICENSE)
+
+## فهرست
+- [شروع](#شروع)
+	- [Ubuntu](#ubuntu)
+		- [روش آنلاین](#روش-آنلاین)
+		- [روش آفلاین](#روش-آفلاین)
+	- [Windows](#windows)
+		- [روش آنلاین](#روش-آنلاین-1)
+		- [روش آفلاین](#روش-آفلاین-1)
+	- [Android](#android)
+		- [روش آنلاین](#روش-آنلاین-2)
+		- [روش آفلاین](#روش-آفلاین-2)
+- [CLI تغییر نام کاربری/رمز پنل](#cli-تغییر-نام-کاربریرمز-پنل)
+- [بازگردانی لینک پنل](#بازگردانی-لینک-پنل)
+- [پنل](#پنل)
+	- [اسکن IPها](#اسکن-ipها)
+	- [تست DNSهای یافت‌شده](#تست-dnsهای-یافتشده)
+	- [منابع](#منابع)
+- [Uninstall](#uninstall)
+	- [فرمان حذف در Ubuntu](#فرمان-حذف-در-ubuntu)
+	- [فرمان حذف در Windows](#فرمان-حذف-در-windows)
+	- [فرمان حذف در Android](#فرمان-حذف-در-android)
+- [تنظیمات CSV Extraction](#تنظیمات-csv-extraction)
+- [تنظیمات DNS Scanner](#تنظیمات-dns-scanner)
+- [خروجی نهایی](#خروجی-نهایی)
+- [سلب مسئولیت (Disclaimer)](#سلب-مسئولیت-disclaimer)
+- [منبع داده‌های پیش‌فرض CIDR](#منبع-دادههای-پیشفرض-cidr)
+
+## شروع
+### Ubuntu
+#### روش آنلاین
 کد زیر را اجرا کنید تا نصب خودکار، آغاز شود:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/SAMPA-ASA/dns-scout/main/install_online.sh | bash
+curl -fsSL https://raw.githubusercontent.com/SAMPA-ASA/dns-scout/main/install_online_ubuntu.sh | bash
 ```
 یا به کمک پروکسی http:
 ```bash
-export http_proxy="http://<your proxy ip>:<your proxy port>"
-export https_proxy="http://<your proxy ip>:<your proxy port>"
-export no_proxy="localhost,127.0.0.1,::1,mirror-linux.runflare.com,mirror.arvancloud.ir,linux-mirror.liara.ir,repo.abrha.net,ubuntu.hostiran.ir,archive.ubuntu.petiak.ir,archive.ubuntu.petiak.ir,ubuntu-mirror.kimiahost.com,ir.ubuntu.sindad.cloud,mirror.faraso.org,mirror.aminidc.com,mirrors.pardisco.co,mirror.0-1.cloud,linuxmirrors.ir,repo.iut.ac.ir,ubuntu.shatel.ir,ubuntu.byteiran.com,mirror.rasanegar.com,mirror-pypi.runflare.com,package-mirror.liara.ir,mirror.abrha.net,pypi.runflare.com,package-mirror.liara.ir,mirror.abrha.net,pypi.mirrors.chabokan.com,pypi.tuna.tsinghua.edu.cn,mirrors.aliyun.com,pypi.mirrors.ustc.edu.cn"
-
-curl -fsSL https://raw.githubusercontent.com/SAMPA-ASA/dns-scout/main/install_online.sh | bash
+curl -x http://PROXY_IP:PORT -fsSL https://raw.githubusercontent.com/SAMPA-ASA/dns-scout/main/install_online_ubuntu.sh | bash
+```
+یا به کمک پروکسی Socks:
+```bash
+curl --socks5 PROXY_IP:PORT -fsSL https://raw.githubusercontent.com/SAMPA-ASA/dns-scout/main/install_online_ubuntu.sh | bash
 ```
 روند نصب:
 1. ابتدا source codeهای پروژه دریافت و ذخیره می‌شود.
@@ -22,12 +53,12 @@ curl -fsSL https://raw.githubusercontent.com/SAMPA-ASA/dns-scout/main/install_on
 4. سرویس `dns-scout.service` را نصب و اجرا می‌شود.
 5. آدرس پنل را نمایش میشود و پنل، راه‌اندازی می‌شود.
 
-### روش دوم
-- ابتدا فایل zip این پروژه را دریافت کنید.
+#### روش آفلاین
+- ابتدا فایل zip این پروژه را دریافت کنید و یا از mirrorهای داخلی، clone کنید.
 - سپس، آن را در مسیر دلخواه خود extract کنید
 - در مسیر پروژه، فرمان زیر را وارد کنید:
 ```bash
-sudo bash install.sh
+sudo bash install_ubuntu.sh
 ```
 
 روند نصب:
@@ -35,21 +66,132 @@ sudo bash install.sh
 2. یک `port` آزاد و تصادفی برای پنل پیشنهاد میشود (که میتوانید آن را تأیید کنید و یا پورت دلخواه خود را وارد کنید)
 4. سرویس `dns-scout.service` را نصب و اجرا می‌شود.
 5. آدرس پنل نمایش میشود و پنل، راه‌اندازی میشود.
+
+### Windows
+
+#### روش آنلاین
+کد زیر را اجرا کنید تا نصب خودکار آغاز شود:
+
+```powershell
+curl -o install_online_windows.ps1 https://raw.githubusercontent.com/SAMPA-ASA/dns-scout/main/install_online_windows.ps1
+powershell -ExecutionPolicy Bypass -File .\install_online_windows.ps1
+```
+
+اگر لازم باشد از پراکسی استفاده کنید:
+
+```powershell
+curl -x http://PROXY_IP:PORT -o install_online_windows.ps1 https://raw.githubusercontent.com/SAMPA-ASA/dns-scout/main/install_online_windows.ps1
+powershell -ExecutionPolicy Bypass -File .\install_online_windows.ps1
+```
+
+```powershell
+curl --socks5 PROXY_IP:PORT -o install_online_windows.ps1 https://raw.githubusercontent.com/SAMPA-ASA/dns-scout/main/install_online_windows.ps1
+powershell -ExecutionPolicy Bypass -File .\install_online_windows.ps1
+```
+
+روند نصب:
+1. سورس پروژه ابتدا دانلود و در مسیر نصب ویندوز کپی می‌شود.
+2. اگر Python نصب نباشد، نصب یا از نسخه موجود استفاده می‌شود.
+3. محیط مجازی و وابستگی‌ها ساخته و نصب می‌شوند.
+4. فایل `panel_config.json` ساخته می‌شود و اطلاعات ورود پنل از شما گرفته می‌شود.
+5. اجرای خودکار با یک Scheduled Task در Startup تنظیم می‌شود و Ruleهای فایروال هم اضافه می‌شوند.
+6. در پایان، آدرس پنل و مسیرهای مدیریتی نمایش داده می‌شود.
+
+#### روش آفلاین
+- اگر مخزن را از قبل clone کرده‌اید یا فایل ZIP را استخراج کرده‌اید، وارد ریشه پروژه شوید و این دستور را اجرا کنید:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\install_windows.ps1
+```
+
+روند نصب:
+1. فایل‌های پروژه در `%ProgramData%\dns-scout` کپی می‌شوند.
+2. اگر لازم باشد Python نصب یا استفاده می‌شود.
+3. محیط مجازی و وابستگی‌ها نصب می‌شوند.
+4. `panel_config.json` ساخته می‌شود و اطلاعات ورود پنل از شما گرفته می‌شود.
+5. Scheduled Task اجرا و برای startup ثبت می‌شود.
+6. Ruleهای فایروال ایجاد می‌شوند و در پایان، آدرس پنل نمایش داده می‌شود.
+
+### Android
+پیش‌نیاز این بخش، نصب Termux روی دستگاه اندروید است.
+
+#### روش آنلاین
+کد زیر را اجرا کنید تا نصب خودکار آغاز شود:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/SAMPA-ASA/dns-scout/main/online_install_termux_android.sh | bash
+```
+
+اگر لازم باشد از پراکسی استفاده کنید:
+
+```bash
+curl -x http://PROXY_IP:PORT -fsSL https://raw.githubusercontent.com/SAMPA-ASA/dns-scout/main/online_install_termux_android.sh | bash
+```
+
+```bash
+curl --socks5 PROXY_IP:PORT -fsSL https://raw.githubusercontent.com/SAMPA-ASA/dns-scout/main/online_install_termux_android.sh | bash
+```
+
+روند نصب:
+1. سورس پروژه از مخزن اصلی clone می‌شود.
+2. فایل‌ها در مسیر `~/.dns-scout` کپی می‌شوند.
+3. Python، virtualenv و وابستگی‌های لازم در Termux آماده می‌شوند.
+4. فایل `panel_config.json` ساخته می‌شود و اطلاعات ورود پنل از شما گرفته می‌شود.
+5. پنل با اسکریپت‌های `dns-scout-start`، `dns-scout-stop` و `dns-scout-status` مدیریت می‌شود.
+6. در پایان، آدرس پنل و دستورهای کنترلی نمایش داده می‌شوند.
+
+#### روش آفلاین
+- اگر مخزن را از قبل clone کرده‌اید یا فایل ZIP را استخراج کرده‌اید، وارد ریشه پروژه شوید و این دستور را اجرا کنید:
+
+```bash
+bash install_termux_android.sh
+```
+
+روند نصب:
+1. فایل‌های پروژه در `~/.dns-scout` کپی می‌شوند.
+2. Python و وابستگی‌های موردنیاز در Termux نصب می‌شوند.
+3. محیط مجازی ساخته و پکیج‌های لازم نصب می‌شوند.
+4. `panel_config.json` ساخته می‌شود و اطلاعات ورود پنل از شما گرفته می‌شود.
+5. پنل راه‌اندازی می‌شود و URL نهایی به شما نمایش داده می‌شود.
+
 ## CLI تغییر نام کاربری/رمز پنل
 
 بعد از نصب، برای تغییر `username/password` بدون نصب مجدد:
 
+Ubuntu:
+
 ```bash
 sudo /opt/dns-scout/.venv/bin/python /opt/dns-scout/manage_panel_auth.py --config /opt/dns-scout/panel_config.json
-```
-
-نکته:
-- اگر پارامتر ندهید، اسکریپت به‌صورت تعاملی username/password جدید را می‌گیرد.
-- بعد از تغییر، سرویس را ری‌استارت کنید:
-
-```bash
 sudo systemctl restart dns-scout.service
 ```
+
+Windows (run as administrator);
+
+```powershell
+$installDir = Join-Path $env:ProgramData "dns-scout"
+$venvPython = Join-Path $installDir ".venv\Scripts\python.exe"
+& $venvPython "$installDir\manage_panel_auth.py" --config "$installDir\panel_config.json"
+Stop-ScheduledTask -TaskName "dns-scout"
+Start-ScheduledTask -TaskName "dns-scout"
+```
+
+## بازگردانی لینک پنل
+
+فرمان زیر برای نمایش دوباره URLهای ورود پنل مدیریت است (مثل `http://localhost:<port>/login`) تا بعد از نصب هم لینک ورود را از طریق CLI داشته باشید.
+
+Ubuntu:
+
+```bash
+sudo /opt/dns-scout/.venv/bin/python /opt/dns-scout/manage_panel_auth.py --config /opt/dns-scout/panel_config.json --show-urls
+```
+
+Windows:
+
+```powershell
+$installDir = Join-Path $env:ProgramData "dns-scout"
+& "$installDir\.venv\Scripts\python.exe" "$installDir\manage_panel_auth.py" --config "$installDir\panel_config.json" --show-urls
+```
+
 
 
 ## پنل 
@@ -65,10 +207,20 @@ sudo systemctl restart dns-scout.service
 
 ## Uninstall
 
-برای حذف سرویس نصب‌شده و بازنشانی وضعیت نصب سیستم (بدون حذف فایل‌های پروژه‌ای که در ابتدا clone شده):
+برای حذف سرویس نصب‌شده و بازنشانی وضعیت نصب سیستم (بدون حذف فایل‌های پروژه‌ای که در ابتدا clone شده).
 
+### فرمان حذف در Ubuntu
 ```bash
-sudo bash ./uninstall.sh
+sudo bash ./uninstall_ubuntu.sh
+```
+### فرمان حذف در Windows
+```powershell
+powershell -ExecutionPolicy Bypass -File .\uninstall_windows.ps1
+```
+
+### فرمان حذف در Android
+```bash
+bash uninstall_termux_android.sh
 ```
 
 ## تنظیمات CSV Extraction
@@ -184,9 +336,6 @@ sudo bash ./uninstall.sh
 
 - [lite.ip2location.com](https://lite.ip2location.com/)
 
----
-- لینک کانال تلگرام: https://t.me/Sampa_Asa <br>
-- راه ارتباطی: https://t.me/Sampa_Asa?direct
----
+## License
 
-به امید روزی که همه به اینترنت آزاد واقعی دست پیدا کنیم. 🕊
+This project is licensed under the MIT License. See [LICENSE](LICENSE) for details.
