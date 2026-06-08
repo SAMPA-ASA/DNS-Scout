@@ -5,13 +5,13 @@
 
 ## فهرست
 - [شروع](#شروع)
-	- [Ubuntu](#ubuntu)
+	- [‏Ubuntu](#ubuntu)
 		- [روش آنلاین](#روش-آنلاین)
 		- [روش آفلاین](#روش-آفلاین)
-	- [Windows](#windows)
+	- [‏Windows](#windows)
 		- [روش آنلاین](#روش-آنلاین-1)
 		- [روش آفلاین](#روش-آفلاین-1)
-	- [Android](#android)
+	- [‏Android](#android)
 		- [روش آنلاین](#روش-آنلاین-2)
 		- [روش آفلاین](#روش-آفلاین-2)
 - [CLI تغییر نام کاربری/رمز پنل](#cli-تغییر-نام-کاربریرمز-پنل)
@@ -338,4 +338,4 @@ bash uninstall_termux_android.sh
 
 ## License
 
-This project is licensed under the MIT License. See [LICENSE](LICENSE) for details.
+این پروژه تحت **مجوز MIT** منتشر شده است. جزئیات بیشتر را در [LICENSE](LICENSE) ببینید.
